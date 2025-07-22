@@ -1,5 +1,5 @@
 # Use a lightweight Debian image as the base
-FROM debian:bullseye
+FROM --platform=linux/arm64 debian:bullseye
 
 # Install necessary dependencies
 RUN apt-get update && apt-get install -y \
@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Download and extract the warp-plus binary
-RUN curl -L -o warp-plus.zip https://github.com/bepass-org/warp-plus/releases/download/v1.2.6/warp-plus_android-arm64.zip \
+RUN curl -L -o warp-plus.zip https://github.com/bepass-org/warp-plus/releases/download/v1.2.6/warp-plus_linux-arm64.zip \
     && unzip warp-plus.zip \
     && rm warp-plus.zip
 
