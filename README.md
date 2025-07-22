@@ -38,7 +38,7 @@ sudo apt install git -y
 This project relies on Docker. The official convenience script is the easiest way to install it.
 
 ```bash
-curl -sSL [https://get.docker.com](https://get.docker.com) | sh
+curl -sSL https://get.docker.com | sh
 ```
 
 After the installation, add your current user to the `docker` group. This allows you to run Docker commands without `sudo` and is highly recommended.
