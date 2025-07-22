@@ -105,7 +105,9 @@ Here are the available commands:
 
 set dns :
 
-
+```bash
 sudo nano /etc/dhcpcd.conf
-------
+```
+```bash
 static domain_name_servers=178.22.122.100 185.51.200.2
+```
