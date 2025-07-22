@@ -24,4 +24,4 @@ EXPOSE 2334 2335 6756 6450
 # 3. Execute the new script as the entrypoint
 ENTRYPOINT ["./entrypoint.sh"]
 
-# CMD is now removed because its logic has been moved to the entrypoint script
+# CMD is now removed because its logic has been moved to the entrypoint script 
