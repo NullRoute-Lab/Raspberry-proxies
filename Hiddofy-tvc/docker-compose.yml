@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  hiddify-tvc:
+    build: .
+    container_name: hiddify-tvc
+    restart: always
+    ports:
+      - "2334:2334"
+      - "2335:2335"
+      - "6756:6756"
+      - "6450:6450"
+    volumes:
+      - ./config.json:/hiddify/config.json
