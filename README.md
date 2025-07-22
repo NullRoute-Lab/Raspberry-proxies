@@ -1,5 +1,5 @@
 
-````markdown
+
 # Raspberry Pi Proxy Suite
 
 This project includes a collection of popular proxy services optimized for running on a **Raspberry Pi 4**. All services are managed via Docker for easy setup and maintenance.
@@ -23,7 +23,7 @@ First, ensure your system's package list and installed packages are up to date.
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-````
+
 
 ### Step 2: Install Git
 
