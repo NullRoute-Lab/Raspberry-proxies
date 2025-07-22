@@ -59,7 +59,7 @@ After the reboot, clone this project's repository.
 
 ```bash
 git clone https://github.com/NullRoute-Lab/Raspberry-proxies
-cd raspberry-proxies
+cd Raspberry-proxies/
 ```
 
 ### Step 5: Make the Management Script Executable
