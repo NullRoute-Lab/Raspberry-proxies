@@ -99,3 +99,13 @@ Here are the available commands:
 
 ```
 ```
+
+
+------
+
+set dns :
+
+
+sudo nano /etc/dhcpcd.conf
+------
+static domain_name_servers=178.22.122.100 185.51.200.2
