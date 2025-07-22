@@ -23,7 +23,7 @@ First, ensure your system's package list and installed packages are up to date.
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-
+```
 
 ### Step 2: Install Git
 
