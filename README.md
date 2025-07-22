@@ -56,9 +56,7 @@ The `manage.sh` script makes it easy to manage all the services.
 | :--- | :--- |
 | `./manage.sh up` | Builds and runs all services in the background. |
 | `./manage.sh down` | Stops and removes all service containers. |
-| `./manage.sh restart` | Restarts all running services. |
 | `./manage.sh build` | Rebuilds the Docker images (useful when you change a `Dockerfile`). |
-| `./manage.sh logs` | Shows live logs of all services for debugging. |
 
 ## Ports
 
