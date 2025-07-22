@@ -1,0 +1,54 @@
+version: "3.8"
+services:
+  multitor:
+    build: ./Tor/multitor
+    container_name: multitor
+    ports:
+      - "16378:16378"
+      - "16379:16379"
+      - "16380:16380"
+    volumes:
+      - ./Tor/multitor/templates:/usr/src/app/templates:Z
+    environment:
+      - TOR_INSTANCES=16
+      - PROXY_MODE=custom_lb
+      - LB_Top_N_Proxies=3
+      - LB_Check_Mode=1
+    cap_add:
+      - NET_ADMIN
+    restart: always
+
+  psiphon:
+    image: swarupsengupta2007/psiphon:latest
+    container_name: psiphon
+    depends_on:
+      - multitor
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./Tor/psiphon:/config:Z
+    ports:
+      - "1080:1080"
+      - "8080:8080"
+    restart: always
+
+  warp:
+    build: ./Warp-hiddify
+    container_name: warp
+    ports:
+      - "8086:8086"
+    restart: always
+    command: ["--cfon", "--country", "DE", "--bind", "0.0.0.0:8086"]
+
+  hiddify-tvc:
+    build: ./Hiddofy-tvc
+    container_name: hiddify-tvc
+    restart: always
+    ports:
+      - "2334:2334"
+      - "2335:2335"
+      - "6756:6756"
+      - "6450:6450"
+    volumes:
+      - ./Hiddofy-tvc/config.json:/hiddify/config.json
