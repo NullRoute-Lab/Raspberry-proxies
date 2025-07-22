@@ -58,7 +58,7 @@ sudo reboot
 After the reboot, clone this project's repository.
 
 ```bash
-git clone <URL_YOUR_REPOSITORY>
+git clone https://github.com/NullRoute-Lab/Raspberry-proxies
 cd raspberry-proxies
 ```
 
