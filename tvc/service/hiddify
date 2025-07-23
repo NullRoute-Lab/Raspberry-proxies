@@ -1,0 +1,259 @@
+#!/bin/sh
+
+START=99
+STOP=10
+
+RAM_MODE=false
+
+# HIDDIFY_URL="https://github.com/NullRoute-Lab/hiddify-core/releases/download/v1.0.1/hiddify-cli-linux-mipsel-softfloat.tar.gz"
+# HIDDIFY_URL="https://github.com/PacketCipher/hiddify-core/releases/download/draft/hiddify-cli-linux-mipsel-softfloat.tar.gz"
+# HIDDIFY_URL="https://github.com/hiddify/hiddify-core/releases/download/v3.1.8/hiddify-cli-linux-mipsel-softfloat.tar.gz"
+HIDDIFY_URL="https://github.com/NullRoute-Lab/hiddify-core/releases/download/v1.0.1/hiddify-cli-linux-arm64.tar.gz"
+
+
+SUB_URLS="http://router.freehost.io/github/mix.txt https://raw.githubusercontent.com/tvccccc/TVCCCC/refs/heads/main/subscriptions/xray/normal/mix https://raw.githubusercontent.com/PacketCipher/TVC/refs/heads/main/subscriptions/xray/normal/mix"
+SUB_URL=$(echo "$SUB_URLS" | cut -d' ' -f1)
+
+# Modify OpenVPN to be enabled or not
+Enable_OVPN=false # This script part focuses on non-OVPN part. OVPN watchdog would need similar changes.
+
+# CRON_JOB_OLD="18,48 * * * * /etc/init.d/hiddify restart" # Old cron job
+CRON_JOB_NEW="0 */12 * * * /root/update_subscriptions.sh && /etc/init.d/hiddify update_config" # New cron job
+
+LIVE_CONFIG_FILE="/root/hiddify-sub"
+WATCHDOG_SCRIPT_NAME="hiddify_watchdog.sh" # Assuming this is the non-OpenVPN watchdog
+
+if [ "$RAM_MODE" = true ]; then
+    SERVICE_DIR="/tmp/usr/bin/HiddifyCli"
+else
+    SERVICE_DIR="/root/HiddifyCli"
+fi
+
+download_and_extract() {
+    echo "Downloading and extracting Hiddify CLI..."
+    [ ! -d "$SERVICE_DIR" ] && mkdir -p "$SERVICE_DIR"
+    local retries=10
+    local count=0
+    until [ $count -ge $retries ]
+    do
+        wget -O - "$HIDDIFY_URL" | tar -xz -C "$SERVICE_DIR" && break
+        count=$((count+1))
+        echo "Retrying... ($count/$retries)"
+        sleep 60
+    done
+    if [ $count -ge $retries ]; then
+        echo "Failed to download and extract Hiddify CLI after $retries attempts."
+        return 1
+    fi
+}
+
+# Function to download initial subscription config if it doesn't exist
+download_initial_config() {
+    if [ ! -f "$LIVE_CONFIG_FILE" ]; then
+        echo "Initial configuration $LIVE_CONFIG_FILE not found. Downloading..."
+
+        # Try downloading from the primary URL first
+        curl -L -o "$LIVE_CONFIG_FILE" "$SUB_URL"
+
+        # If the primary URL fails, try the backup links
+        if [ ! -s "$LIVE_CONFIG_FILE" ]; then
+            echo "Primary subscription link failed. Trying backup links..."
+
+            local backup_urls=$(echo "$SUB_URLS" | cut -d' ' -f2-)
+
+            for url in $backup_urls; do
+                echo "Trying backup link: $url"
+                curl -L -o "$LIVE_CONFIG_FILE" "$url"
+                if [ -s "$LIVE_CONFIG_FILE" ]; then
+                    echo "Backup link successful. Initial configuration downloaded."
+                    # Update the state file with the successful URL
+                    echo "$url" > "/tmp/hiddify_current_sub_url"
+                    return 0
+                fi
+            done
+
+            echo "Error: All subscription links failed. Could not download initial configuration."
+            rm -f "$LIVE_CONFIG_FILE" # Clean up
+            return 1
+        else
+            echo "Initial configuration downloaded successfully from primary URL."
+            # Update the state file with the primary URL
+            echo "$SUB_URL" > "/tmp/hiddify_current_sub_url"
+        fi
+    else
+        echo "Configuration file $LIVE_CONFIG_FILE already exists."
+    fi
+    return 0
+}
+
+add_cron_job() {
+    echo "Adding/Updating cron job to: $CRON_JOB_NEW"
+    # Remove old cron job if it exists, then add new one
+    (crontab -l 2>/dev/null | grep -v -F "/etc/init.d/hiddify restart" | grep -v -F "$CRON_JOB_NEW"; echo "$CRON_JOB_NEW") | crontab -
+}
+
+remove_cron_job() {
+    echo "Removing cron job..."
+    crontab -l 2>/dev/null | grep -v -F "$CRON_JOB_NEW" | crontab -
+}
+
+start() {
+    echo "Starting Hiddify service..."
+
+    cp -f /etc/init.d/update_subscriptions.sh /root/update_subscriptions.sh
+    chmod +x /root/update_subscriptions.sh
+
+    if [ ! -f "$SERVICE_DIR/HiddifyCli" ]; then
+        download_and_extract || return 1
+    fi
+
+    # Download initial config if it's not present
+    download_initial_config || return 1
+
+    echo "Starting $WATCHDOG_SCRIPT_NAME..."
+    # Pass SUB_URL and SERVICE_DIR as environment variables to the watchdog
+    # The watchdog script has been modified to use these from the environment
+    if [ "$Enable_OVPN" = true ]; then
+        # This part is for OVPN, which is out of scope for current changes,
+        # but if it were to be updated, hiddify_openvpn_watchdog.sh would need similar signal handling.
+        echo "OpenVPN mode is selected. Ensure hiddify_openvpn_watchdog.sh is adapted for new update logic."
+        SUB_URLS=$SUB_URLS SUB_URL=$SUB_URL SERVICE_DIR=$SERVICE_DIR nohup /root/hiddify_openvpn_watchdog.sh > /dev/null 2>&1 &
+    else
+        SUB_URLS=$SUB_URLS SUB_URL=$SUB_URL SERVICE_DIR=$SERVICE_DIR nohup "/root/$WATCHDOG_SCRIPT_NAME" > /dev/null 2>&1 &
+    fi
+
+    add_cron_job
+}
+
+stop() {
+    echo "Stopping Hiddify service..."
+
+    # Determine the correct watchdog script name based on Enable_OVPN
+    local current_watchdog_script_name="$WATCHDOG_SCRIPT_NAME"
+    if [ "$Enable_OVPN" = true ]; then
+        current_watchdog_script_name="hiddify_openvpn_watchdog.sh"
+    fi
+
+    # Check if pkill is available
+    if command -v pkill >/dev/null 2>&1; then
+        echo "Using pkill to stop processes..."
+        if [ "$Enable_OVPN" = true ]; then
+            echo "Stopping OpenVPN related processes..."
+            pkill -f "/root/$current_watchdog_script_name"
+            pkill -f "HiddifyCli run --config $LIVE_CONFIG_FILE" # Assuming HiddifyCli command is similar or needs specific targeting
+            pkill -f openvpn # Standard openvpn process name
+        else
+            echo "Stopping standard Hiddify processes..."
+            pkill -f "/root/$current_watchdog_script_name"
+            pkill -f "HiddifyCli run --config $LIVE_CONFIG_FILE"
+        fi
+    else
+        echo "pkill not found. Using pgrep and kill to stop processes..."
+        # Stop the watchdog script
+        echo "Attempting to stop $current_watchdog_script_name..."
+        pgrep -f "/root/$current_watchdog_script_name" | while read -r pid; do
+            if [ -n "$pid" ]; then
+                echo "Killing $current_watchdog_script_name (PID: $pid)..."
+                kill "$pid"
+            fi
+        done
+
+        # Stop HiddifyCli process
+        echo "Attempting to stop HiddifyCli..."
+        pgrep -f "HiddifyCli run --config $LIVE_CONFIG_FILE" | while read -r pid; do
+            if [ -n "$pid" ]; then
+                echo "Killing HiddifyCli (PID: $pid)..."
+                kill "$pid"
+            fi
+        done
+
+        if [ "$Enable_OVPN" = true ]; then
+            echo "Attempting to stop OpenVPN process..."
+            pgrep -f openvpn | while read -r pid; do # Assuming 'openvpn' is a distinct enough name
+                if [ -n "$pid" ]; then
+                    echo "Killing openvpn (PID: $pid)..."
+                    kill "$pid"
+                fi
+            done
+        fi
+    fi
+
+    # Give processes a moment to terminate gracefully
+    sleep 2
+
+    # Optional: Force kill remaining processes if they didn't stop (use with caution)
+    # echo "Checking for remaining processes and force stopping if necessary..."
+    # if pgrep -f "/root/$current_watchdog_script_name" >/dev/null; then
+    #     echo "$current_watchdog_script_name still running, attempting force kill..."
+    #     pgrep -f "/root/$current_watchdog_script_name" | xargs kill -9
+    # fi
+    # if pgrep -f "HiddifyCli run --config $LIVE_CONFIG_FILE" >/dev/null; then
+    #    echo "HiddifyCli still running, attempting force kill..."
+    #    pgrep -f "HiddifyCli run --config $LIVE_CONFIG_FILE" | xargs kill -9
+    # fi
+    # if [ "$Enable_OVPN" = true ] && pgrep -f openvpn >/dev/null; then
+    #    echo "OpenVPN still running, attempting force kill..."
+    #    pgrep -f openvpn | xargs kill -9
+    # fi
+
+    remove_cron_job
+    echo "Hiddify service stop sequence finished."
+}
+
+restart() {
+    echo "Restarting Hiddify service..."
+    stop
+    sleep 1
+    start
+}
+
+update_config() {
+    echo "Attempting to trigger configuration update for Hiddify..."
+
+    # Run the subscription update script
+    /root/update_subscriptions.sh
+
+    # Read the best URL from the state file
+    if [ -f "/tmp/hiddify_current_sub_url" ]; then
+        export SUB_URL=$(cat "/tmp/hiddify_current_sub_url")
+    else
+        echo "Error: State file not found. Cannot determine subscription URL."
+        return
+    fi
+
+    local watchdog_pid
+    watchdog_pid=$(pgrep -f "/root/$WATCHDOG_SCRIPT_NAME")
+
+    if [ -n "$watchdog_pid" ]; then
+        for pid in $watchdog_pid; do
+            echo "Sending SIGUSR1 to $WATCHDOG_SCRIPT_NAME (PID: $pid)"
+            kill -USR1 "$pid"
+        done
+        echo "Configuration update signal sent."
+    else
+        echo "Error: $WATCHDOG_SCRIPT_NAME is not running. Cannot send update signal."
+        echo "Consider starting the service."
+    fi
+}
+
+# Standard OpenWrt service functions
+start_service() {
+    start
+}
+
+stop_service() {
+    stop
+}
+
+disable() {
+    stop
+    # Optionally, could also remove the HiddifyCli binaries/configs if disable means full removal
+    # For now, just stopping and removing cron job.
+    echo "Hiddify service disabled."
+}
+
+# Note: For this new system to work, the cron job needs to be updated from
+# "18,48 * * * * /etc/init.d/hiddify restart"
+# to
+# "18,48 * * * * /etc/init.d/hiddify update_config"
+# The add_cron_job function has been updated to reflect this.

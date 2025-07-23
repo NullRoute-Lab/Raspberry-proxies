@@ -1,5 +1,5 @@
 # Use a lightweight Debian image as the base
-FROM --platform=linux/arm64 debian:bullseye
+FROM debian:bullseye
 
 # Install necessary dependencies
 RUN apt-get update && apt-get install -y \
