@@ -2,6 +2,7 @@ version: "3.8"
 services:
   multitor:
     build: ./Tor/multitor
+    platform: linux/arm64
     container_name: multitor
     ports:
       - "16378:16378"
@@ -20,6 +21,7 @@ services:
 
   psiphon:
     image: swarupsengupta2007/psiphon:latest
+    platform: linux/arm64
     container_name: psiphon
     depends_on:
       - multitor
@@ -35,10 +37,19 @@ services:
 
   warp:
     build: ./Warp-hiddify
+    platform: linux/arm64
     container_name: warp
     ports:
       - "8086:8086"
     restart: always
     command: ["--cfon", "--country", "DE", "--bind", "0.0.0.0:8086"]
 
-
+  tvc:
+    build: ./tvc
+    platform: linux/arm64
+    container_name: tvc
+    ports:
+      - "2334:2334"
+      - "6756:6756"
+    command: ["/root/hiddify/setup.sh"]
+    restart: always
