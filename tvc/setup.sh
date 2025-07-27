@@ -1,6 +1,7 @@
-# Update apt-get and install necessary packages
-apt-get update
-apt-get install -y --no-install-recommends coreutils curl wget jq
+# Update opkg and install necessary packages
+# install kmod-tun for tunneling support
+opkg update
+opkg install coreutils-nohup curl wget jq
 
 # Copy configuration and watchdog script, overwriting if they exist
 cp -f hiddify-conf.json /root/hiddify-conf.json
@@ -18,4 +19,5 @@ cp -f service/hiddify /etc/init.d/hiddify
 chmod +x /etc/init.d/hiddify
 
 # Enable and start the service
+/etc/init.d/hiddify enable
 /etc/init.d/hiddify start

@@ -47,9 +47,9 @@ services:
   tvc:
     build: ./tvc
     platform: linux/arm64
+    privileged: true
     container_name: tvc
     ports:
       - "2334:2334"
       - "6756:6756"
-    command: ["/root/hiddify/setup.sh"]
     restart: always
