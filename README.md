@@ -106,8 +106,20 @@ Here are the available commands:
 set dns :
 
 ```bash
-sudo nano /etc/dhcpcd.conf
+nmcli connection show
 ```
 ```bash
-static domain_name_servers=178.22.122.100 185.51.200.2
+sudo nmcli connection modify "preconfigured" ipv4.dns "178.22.122.100 185.51.200.2"
+```
+```bash
+sudo nmcli connection modify "preconfigured" ipv4.ignore-auto-dns yes
+```
+```bash
+sudo nmcli connection down "preconfigured" && sudo nmcli connection up "preconfigured"
+```
+```bash
+cat /etc/resolv.conf
+```
+```bash
+curl -I https://hub.docker.com
 ```
