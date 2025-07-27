@@ -1,28 +1,16 @@
-FROM debian:bullseye
+FROM ophub/openwrt-armv8:latest
 
-# Install necessary packages
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    coreutils \
-    curl \
-    wget \
-    jq \
-    openvpn \
-    unzip \
-    && rm -rf /var/lib/apt/lists/*
+# Copy all project files from the host's /tvc directory into the image's /tvc directory
+COPY . /tvc/
 
-# Copy the hiddify service files to the container
-COPY . /root/hiddify
+# Set the working directory to /tvc
+WORKDIR /tvc
 
-# Set the working directory
-WORKDIR /root/hiddify
-
-# Make the setup script executable and run it
-RUN chmod +x setup.sh && \
-    ./setup.sh
+# Run the setup script to install the service
+RUN chmod +x setup.sh && sync && ./setup.sh
 
 # Expose the necessary ports
 EXPOSE 2334 6756
 
-# Start the hiddify service
-CMD ["/etc/init.d/hiddify", "start"]
+# Set the final command to start the OpenWrt environment
+CMD ["/sbin/init"]
