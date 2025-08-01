@@ -44,12 +44,12 @@ services:
     restart: always
     command: ["--cfon", "--country", "DE", "--bind", "0.0.0.0:8086"]
 
-  tvc:
-    build: ./tvc
-    platform: linux/arm64
-    privileged: true
-    container_name: tvc
-    ports:
-      - "2334:2334"
-      - "6756:6756"
-    restart: always
+  # tvc:
+  #   build: ./tvc
+  #   platform: linux/arm64
+  #   privileged: true
+  #   container_name: tvc
+  #   ports:
+  #     - "2334:2334"
+  #     - "6756:6756"
+  #   restart: always

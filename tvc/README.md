@@ -37,7 +37,7 @@ chmod +x ./setup.sh
 
 -----
 
-test this manually for tun mode(replace hiddify-core) :
+test this manually for tun mode(replace hiddify-core) : 
 https://hiddify.com/fa/app/How-to-use-HiddifyCli-on-OpenWrt/#_1
 https://hiddify.com/fa/app/How-to-Enable-Free-Internet-Access-for-Clients-Behind-an-OpenWrt-Router-Using-HiddifyCli/
 
