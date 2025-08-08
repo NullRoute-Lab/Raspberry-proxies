@@ -3,12 +3,12 @@
 START=99
 STOP=10
 
-RAM_MODE=true
+RAM_MODE=false
 
-HIDDIFY_URL="https://github.com/NullRoute-Lab/hiddify-core/releases/download/v1.0.1/hiddify-cli-linux-mipsel-softfloat.tar.gz"
+HIDDIFY_URL="https://github.com/NullRoute-Lab/hiddify-core/releases/download/v1.0.1/hiddify-cli-linux-arm64.tar.gz"
+# HIDDIFY_URL="https://github.com/NullRoute-Lab/hiddify-core/releases/download/v1.0.1/hiddify-cli-linux-mipsel-softfloat.tar.gz"
 # HIDDIFY_URL="https://github.com/PacketCipher/hiddify-core/releases/download/draft/hiddify-cli-linux-mipsel-softfloat.tar.gz"
 # HIDDIFY_URL="https://github.com/hiddify/hiddify-core/releases/download/v3.1.8/hiddify-cli-linux-mipsel-softfloat.tar.gz"
-# HIDDIFY_URL="https://github.com/NullRoute-Lab/hiddify-core/releases/download/v1.0.1/hiddify-cli-linux-arm64.tar.gz"
 
 
 # Source the subscription URLs from the dedicated config file
